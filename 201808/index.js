@@ -39,7 +39,7 @@ class COUP {
 
 		this.ALLPLAYER = allPlayer;
 
-		this.GetBots();
+		this.MakeBots();
 		this.MakePlayers();
 		this.HandOutCards();
 		this.ElectStarter();
@@ -48,7 +48,7 @@ class COUP {
 		return this.Turn();
 	}
 
-	GetBots() {
+	MakeBots() {
 		try {
 			this.ALLPLAYER.forEach( player => {
 				const bot = require(`./${ player }/index.js`);
