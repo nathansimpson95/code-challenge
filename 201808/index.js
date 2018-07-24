@@ -17,11 +17,11 @@ class COUP {
 		this.HISTORY = [];
 		this.DISCARDPILE = [];
 		this.BOTS = {};
-		this.PLAYER = {};
-		this.DECK = [].concat(DECK);
+		this.PLAYERSTATE = {};
+		this.GAMEDECK = [].concat(DECK);
 		this.TURN = 0;
 		this.ROUNDS = 0;
-		this.ALLPLAYER = [];
+		this.PLAYERNAMES = [];
 	}
 
 	Play( availablePlayers ) {
@@ -48,7 +48,7 @@ class COUP {
 			process.exit(1);
 		}
 
-		this.ALLPLAYER = selectedPlayers;
+		this.PLAYERNAMES = selectedPlayers;
 
 		this.MakeBots();
 		this.MakePlayers();
@@ -62,7 +62,7 @@ class COUP {
 	MakeBots() {
 		console.log('in COUP original MakeBots() function');
 
-		this.ALLPLAYER.forEach( player => {
+		this.PLAYERNAMES.forEach( player => {
 			let BotClass;
 			let bot;
 
@@ -87,8 +87,8 @@ class COUP {
 
 
 	MakePlayers() {
-		this.ALLPLAYER.forEach( player => {
-			this.PLAYER[ player ] = {
+		this.PLAYERNAMES.forEach( player => {
+			this.PLAYERSTATE[ player ] = {
 				card1: undefined,
 				card2: undefined,
 				coins: 0,
@@ -97,7 +97,7 @@ class COUP {
 	}
 
 	ShuffleCards() {
-		this.DECK = this.DECK
+		this.GAMEDECK = this.GAMEDECK
 			.filter( item => item !== undefined )
 			.map( item => [ Math.random(), item ] )
 			.sort( ( a, b ) => a[ 0 ] - b[ 0 ] )
@@ -106,19 +106,16 @@ class COUP {
 
 	HandOutCards() {
 		this.ShuffleCards();
-
-		Object
-			.entries( this.PLAYER )
-			.forEach( ([ key, value ]) => {
-				this.PLAYER[ key ].card1 = this.DECK.pop();
-				this.PLAYER[ key ].card2 = this.DECK.pop();
-			});
+		this.PLAYERNAMES.forEach( player => {
+			this.PLAYERSTATE[ player ].card1 = this.GAMEDECK.pop();
+			this.PLAYERSTATE[ player ].card2 = this.GAMEDECK.pop();
+		});
 	}
 
 	GetCardFromDeck() {
-		const newCard = this.DECK.pop();
+		const newCard = this.GAMEDECK.pop();
 
-		if( !newCard && this.DECK.length > 0 ) {
+		if( !newCard && this.GAMEDECK.length > 0 ) {
 			return this.GetCardFromDeck();
 		}
 		else {
@@ -128,7 +125,7 @@ class COUP {
 
 
 	ExchangeCard( card ) {
-		this.DECK.push( card );
+		this.GAMEDECK.push( card );
 		this.ShuffleCards();
 
 		return this.GetCardFromDeck();
@@ -137,8 +134,8 @@ class COUP {
 
 	SwapCards({ chosenCards = [], newCards, player }) {
 		let oldCards = [];
-		if( this.PLAYER[ player ].card1 ) oldCards.push( this.PLAYER[ player ].card1 );
-		if( this.PLAYER[ player ].card2 ) oldCards.push( this.PLAYER[ player ].card2 );
+		if( this.PLAYERSTATE[ player ].card1 ) oldCards.push( this.PLAYERSTATE[ player ].card1 );
+		if( this.PLAYERSTATE[ player ].card2 ) oldCards.push( this.PLAYERSTATE[ player ].card2 );
 
 		let allCards = oldCards.slice( 0 );
 		if( newCards[ 0 ] ) allCards.push( newCards[ 0 ] );
@@ -148,8 +145,8 @@ class COUP {
 			.filter( card => allCards.includes( card ) )
 			.slice( 0, oldCards.length );
 
-		this.PLAYER[ player ].card1 = chosenCards[ 0 ];
-		this.PLAYER[ player ].card2 = chosenCards[ 1 ];
+		this.PLAYERSTATE[ player ].card1 = chosenCards[ 0 ];
+		this.PLAYERSTATE[ player ].card2 = chosenCards[ 1 ];
 
 		allCards
 			.filter( card => {
@@ -163,32 +160,32 @@ class COUP {
 				}
 				return true;
 			})
-			.map( card => this.DECK.push( card ) );
+			.map( card => this.GAMEDECK.push( card ) );
 	}
 
 
 	StillAlive( player ) {
 		let cards = 0;
-		if( this.PLAYER[ player ].card1 ) cards ++;
-		if( this.PLAYER[ player ].card2 ) cards ++;
+		if( this.PLAYERSTATE[ player ].card1 ) cards ++;
+		if( this.PLAYERSTATE[ player ].card2 ) cards ++;
 
 		return cards > 0;
 	}
 
 
 	ElectStarter() {
-		this.TURN = Math.floor( Math.random() * Object.keys( this.PLAYER ).length );
+		this.TURN = Math.floor( Math.random() * this.PLAYERNAMES.length );
 	}
 
 
 	GetWhosNext() {
 		this.TURN ++;
 
-		if( this.TURN > Object.keys( this.PLAYER ).length - 1 ) {
+		if( this.TURN > this.PLAYERNAMES.length - 1 ) {
 			this.TURN = 0;
 		}
 
-		if( this.PLAYER[ Object.keys( this.PLAYER )[ this.TURN ] ].card1 || this.PLAYER[ Object.keys( this.PLAYER )[ this.TURN ] ].card2 ) {
+		if( this.PLAYERSTATE[ this.PLAYERNAMES[ this.TURN ] ].card1 || this.PLAYERSTATE[ this.PLAYERNAMES[ this.TURN ] ].card2 ) {
 			return this.TURN;
 		}
 		else {
@@ -198,9 +195,7 @@ class COUP {
 
 
 	WhoIsLeft() {
-		return Object
-			.keys( this.PLAYER )
-			.filter( player => this.PLAYER[ player ].card1 || this.PLAYER[ player ].card2 );
+		return this.PLAYERNAMES.filter( player => this.PLAYERSTATE[ player ].card1 || this.PLAYERSTATE[ player ].card2 );
 	}
 
 
@@ -209,12 +204,12 @@ class COUP {
 			.filter( user => user !== filter )
 			.map( player => {
 				let cards = 0;
-				if( this.PLAYER[ player ].card1 ) cards ++;
-				if( this.PLAYER[ player ].card2 ) cards ++;
+				if( this.PLAYERSTATE[ player ].card1 ) cards ++;
+				if( this.PLAYERSTATE[ player ].card2 ) cards ++;
 
 				return {
 					name: player,
-					coins: this.PLAYER[ player ].coins,
+					coins: this.PLAYERSTATE[ player ].coins,
 					cards,
 				};
 			});
@@ -225,7 +220,7 @@ class COUP {
 		return {
 			history: this.HISTORY.slice( 0 ),
 			myCards: this.GetPlayerCards( player ),
-			myCoins: this.PLAYER[ player ].coins,
+			myCoins: this.PLAYERSTATE[ player ].coins,
 			otherPlayers: this.GetPlayerObjects( this.WhoIsLeft(), player ),
 			discardedCards: this.DISCARDPILE.slice( 0 ),
 		}
@@ -241,24 +236,24 @@ class COUP {
 		if( !player ) {
 			return player;
 		}
-		else if( !this.ALLPLAYER.includes( player ) ) {
+		else if( !this.PLAYERNAMES.includes( player ) ) {
 			return `[${ Style.yellow(`${ player }`)} -not found-]`;
 		}
 		else {
 			return Style.yellow(`[${ player } `) +
-				// `${ this.PLAYER[ player ].card1 ? `${ Style.red( this.PLAYER[ player ].card1.substring( 0, 2 ) ) } ` : '' }` +
-				// `${ this.PLAYER[ player ].card2 ? `${ Style.red( this.PLAYER[ player ].card2.substring( 0, 2 ) ) } ` : '' }` +
-				`${ this.PLAYER[ player ].card1 ? Style.red('♥') : '' }` +
-				`${ this.PLAYER[ player ].card2 ? Style.red('♥') : '' }` +
-				` ${ Style.yellow(`💰 ${ this.PLAYER[ player ].coins }]`) }`;
+				// `${ this.PLAYERSTATE[ player ].card1 ? `${ Style.red( this.PLAYERSTATE[ player ].card1.substring( 0, 2 ) ) } ` : '' }` +
+				// `${ this.PLAYERSTATE[ player ].card2 ? `${ Style.red( this.PLAYERSTATE[ player ].card2.substring( 0, 2 ) ) } ` : '' }` +
+				`${ this.PLAYERSTATE[ player ].card1 ? Style.red('♥') : '' }` +
+				`${ this.PLAYERSTATE[ player ].card2 ? Style.red('♥') : '' }` +
+				` ${ Style.yellow(`💰 ${ this.PLAYERSTATE[ player ].coins }]`) }`;
 		}
 	}
 
 
 	GetPlayerCards( player ) {
 		const myCards = [];
-		if( this.PLAYER[ player ].card1 ) myCards.push( this.PLAYER[ player ].card1 );
-		if( this.PLAYER[ player ].card2 ) myCards.push( this.PLAYER[ player ].card2 );
+		if( this.PLAYERSTATE[ player ].card1 ) myCards.push( this.PLAYERSTATE[ player ].card1 );
+		if( this.PLAYERSTATE[ player ].card2 ) myCards.push( this.PLAYERSTATE[ player ].card2 );
 		return myCards;
 	}
 
@@ -266,13 +261,13 @@ class COUP {
 	LosePlayerCard( player, card ) {
 		let lost = '';
 
-		if( this.PLAYER[ player ].card1 === card ) {
-			lost = this.PLAYER[ player ].card1;
-			this.PLAYER[ player ].card1 = undefined;
+		if( this.PLAYERSTATE[ player ].card1 === card ) {
+			lost = this.PLAYERSTATE[ player ].card1;
+			this.PLAYERSTATE[ player ].card1 = undefined;
 		}
-		else if( this.PLAYER[ player ].card2 === card ) {
-			lost = this.PLAYER[ player ].card2;
-			this.PLAYER[ player ].card2 = undefined;
+		else if( this.PLAYERSTATE[ player ].card2 === card ) {
+			lost = this.PLAYERSTATE[ player ].card2;
+			this.PLAYERSTATE[ player ].card2 = undefined;
 		}
 
 		this.HISTORY.push({
@@ -284,8 +279,8 @@ class COUP {
 		this.DISCARDPILE.push( lost );
 
 		let lives = 0;
-		if( this.PLAYER[ player ].card1 ) lives ++;
-		if( this.PLAYER[ player ].card2 ) lives ++;
+		if( this.PLAYERSTATE[ player ].card1 ) lives ++;
+		if( this.PLAYERSTATE[ player ].card2 ) lives ++;
 
 		console.log(`${ lives > 0 ? '💔' : '☠️' }  ${ this.GetAvatar( player ) } has lost the ${ Style.yellow( lost ) }`);
 	}
@@ -301,19 +296,19 @@ class COUP {
 			});
 		}
 		catch( error ) {
-			this.PLAYER[ player ].card1 = undefined;
-			this.PLAYER[ player ].card2 = undefined;
+			this.PLAYERSTATE[ player ].card1 = undefined;
+			this.PLAYERSTATE[ player ].card2 = undefined;
 			console.error(`Error in bot ${ player }`);
 			console.error( error );
 		}
 
-		const _validCard = [ this.PLAYER[ player ].card1, this.PLAYER[ player ].card2 ].includes( lostCard ) && lostCard;
+		const _validCard = [ this.PLAYERSTATE[ player ].card1, this.PLAYERSTATE[ player ].card2 ].includes( lostCard ) && lostCard;
 
-		if( _validCard && this.PLAYER[ player ].card1 === lostCard || !_validCard && this.PLAYER[ player ].card1 ) {
-			penalty = this.PLAYER[ player ].card1;
+		if( _validCard && this.PLAYERSTATE[ player ].card1 === lostCard || !_validCard && this.PLAYERSTATE[ player ].card1 ) {
+			penalty = this.PLAYERSTATE[ player ].card1;
 		}
-		else if( _validCard && this.PLAYER[ player ].card2 === lostCard || !_validCard && this.PLAYER[ player ].card2 ) {
-			penalty = this.PLAYER[ player ].card2;
+		else if( _validCard && this.PLAYERSTATE[ player ].card2 === lostCard || !_validCard && this.PLAYERSTATE[ player ].card2 ) {
+			penalty = this.PLAYERSTATE[ player ].card2;
 		}
 
 		console.log(`🚨  ${ this.GetAvatar( player ) } was penalised because ${ Style.yellow( reason ) }`);
@@ -345,7 +340,7 @@ class COUP {
 		}
 
 		if( botAnswer ) {
-			const lying = this.PLAYER[ challengee ].card1 !== card && this.PLAYER[ challengee ].card2 !== card;
+			const lying = this.PLAYERSTATE[ challengee ].card1 !== card && this.PLAYERSTATE[ challengee ].card2 !== card;
 
 			this.HISTORY.push({
 				type,
@@ -376,8 +371,8 @@ class COUP {
 				this.Penalty( challenger, `of challenging ${ this.GetAvatar( challengee ) } unsuccessfully` );
 				const newCard = this.ExchangeCard( card );
 
-				if( this.PLAYER[ challengee ].card1 === card ) this.PLAYER[ challengee ].card1 = newCard;
-				else if( this.PLAYER[ challengee ].card2 === card ) this.PLAYER[ challengee ].card2 = newCard;
+				if( this.PLAYERSTATE[ challengee ].card1 === card ) this.PLAYERSTATE[ challengee ].card1 = newCard;
+				else if( this.PLAYERSTATE[ challengee ].card2 === card ) this.PLAYERSTATE[ challengee ].card2 = newCard;
 
 				this.HISTORY.push({
 					type: 'unsuccessful-challenge',
@@ -399,9 +394,8 @@ class COUP {
 
 		const challengee = type === 'counter-round' ? counterer : player;
 
-		Object
-			.keys( this.PLAYER )
-			.filter( challenger => challenger !== challengee && ( this.PLAYER[ challenger ].card1 || this.PLAYER[ challenger ].card2 ) )
+		this.PLAYERNAMES
+			.filter( challenger => challenger !== challengee && ( this.PLAYERSTATE[ challenger ].card1 || this.PLAYERSTATE[ challenger ].card2 ) )
 			.some( challenger => {
 				_hasBeenChallenged = this.ResolveChallenge({ challenger, byWhom: player, card, action, type, target, counterer, challengee });
 				return _hasBeenChallenged === 'done' ? true : _hasBeenChallenged;
@@ -436,9 +430,8 @@ class COUP {
 		}
 		else {
 			// Foreign aid. everyone gets a go!
-			Object
-				.keys( this.PLAYER )
-				.filter( counterer => counterer !== player && ( this.PLAYER[ counterer ].card1 || this.PLAYER[ counterer ].card2 ) )
+			this.PLAYERNAMES
+				.filter( counterer => counterer !== player && ( this.PLAYERSTATE[ counterer ].card1 || this.PLAYERSTATE[ counterer ].card2 ) )
 				.some( counterer => {
 					let _hasBeenChallenged;
 					try {
@@ -513,7 +506,7 @@ class COUP {
 
 
 	RunActions({ player, action, target }) {
-		if( !this.PLAYER[ target ] && !['taking-1', 'taking-3', 'swapping', 'foreign-aid'].includes( action ) ) {
+		if( !this.PLAYERSTATE[ target ] && !['taking-1', 'taking-3', 'swapping', 'foreign-aid'].includes( action ) ) {
 			this.Penalty( player, `did't give a valid (${ target }) player` );
 			return true;
 		}
@@ -523,7 +516,7 @@ class COUP {
 			return true;
 		}
 
-		if( this.PLAYER[ player ].coins > 10 && action !== 'couping' ) {
+		if( this.PLAYERSTATE[ player ].coins > 10 && action !== 'couping' ) {
 			this.Penalty( player, `had too much coins and needed to coup` );
 			return;
 		}
@@ -532,31 +525,31 @@ class COUP {
 
 		switch( action ) {
 			case 'taking-1':
-				this.PLAYER[ player ].coins ++;
+				this.PLAYERSTATE[ player ].coins ++;
 				break;
 
 			case 'foreign-aid':
-				this.PLAYER[ player ].coins += 2;
+				this.PLAYERSTATE[ player ].coins += 2;
 				break;
 
 			case 'couping':
-				this.PLAYER[ player ].coins -= 7;
+				this.PLAYERSTATE[ player ].coins -= 7;
 				try {
 					disgarded = this.BOTS[ target ].OnCardLoss({
 						...this.GetGameState(target),
 					});
 				}
 				catch( error ) {
-					this.PLAYER[ target ].card1 = undefined;
-					this.PLAYER[ target ].card2 = undefined;
+					this.PLAYERSTATE[ target ].card1 = undefined;
+					this.PLAYERSTATE[ target ].card2 = undefined;
 					console.error(`Error in bot ${ target }`);
 					console.error( error );
 				}
 
-				if( this.PLAYER[ target ].card1 === disgarded && disgarded ) {
+				if( this.PLAYERSTATE[ target ].card1 === disgarded && disgarded ) {
 					this.LosePlayerCard( target, disgarded );
 				}
-				else if( this.PLAYER[ target ].card2 === disgarded && disgarded ) {
+				else if( this.PLAYERSTATE[ target ].card2 === disgarded && disgarded ) {
 					this.LosePlayerCard( target, disgarded );
 				}
 				else {
@@ -565,7 +558,7 @@ class COUP {
 				break;
 
 			case 'taking-3':
-				this.PLAYER[ player ].coins += 3;
+				this.PLAYERSTATE[ player ].coins += 3;
 				break;
 
 			case 'assassination':
@@ -575,16 +568,16 @@ class COUP {
 					});
 				}
 				catch( error ) {
-					this.PLAYER[ target ].card1 = undefined;
-					this.PLAYER[ target ].card2 = undefined;
+					this.PLAYERSTATE[ target ].card1 = undefined;
+					this.PLAYERSTATE[ target ].card2 = undefined;
 					console.error(`Error in bot ${ target }`);
 					console.error( error );
 				}
 
-				if( this.PLAYER[ target ].card1 === disgarded && disgarded ) {
+				if( this.PLAYERSTATE[ target ].card1 === disgarded && disgarded ) {
 					this.LosePlayerCard( target, disgarded );
 				}
-				else if( this.PLAYER[ target ].card2 === disgarded && disgarded ) {
+				else if( this.PLAYERSTATE[ target ].card2 === disgarded && disgarded ) {
 					this.LosePlayerCard( target, disgarded );
 				}
 				else {
@@ -593,13 +586,13 @@ class COUP {
 				break;
 
 			case 'stealing':
-				if( this.PLAYER[ target ].coins < 2 ) {
-					this.PLAYER[ player ].coins += this.PLAYER[ target ].coins;
-					this.PLAYER[ target ].coins = 0;
+				if( this.PLAYERSTATE[ target ].coins < 2 ) {
+					this.PLAYERSTATE[ player ].coins += this.PLAYERSTATE[ target ].coins;
+					this.PLAYERSTATE[ target ].coins = 0;
 				}
 				else {
-					this.PLAYER[ player ].coins += 2;
-					this.PLAYER[ target ].coins -= 2;
+					this.PLAYERSTATE[ player ].coins += 2;
+					this.PLAYERSTATE[ target ].coins -= 2;
 				}
 				break;
 
@@ -625,7 +618,7 @@ class COUP {
 
 
 	Turn() {
-		const player = Object.keys( this.PLAYER )[ this.GetWhosNext() ];
+		const player = this.PLAYERNAMES[ this.GetWhosNext() ];
 
 		let botAnswer;
 		try {
@@ -674,7 +667,7 @@ class COUP {
 					});
 					console.log(`🃏  ${ playerAvatar } coups ${ targetAvatar }`);
 
-					if( this.PLAYER[ player ].coins < 7 ) {
+					if( this.PLAYERSTATE[ player ].coins < 7 ) {
 						this.Penalty( player, `did't having enough coins for a coup` );
 						skipAction = true;
 					}
@@ -701,7 +694,7 @@ class COUP {
 					});
 					console.log(`🃏  ${ playerAvatar } assassinates ${ targetAvatar }`);
 
-					if( this.PLAYER[ player ].coins < 3 ) {
+					if( this.PLAYERSTATE[ player ].coins < 3 ) {
 						this.Penalty( player, `did't have enough coins for an assassination` );
 						skipAction = true;
 					}
@@ -710,7 +703,7 @@ class COUP {
 						skipAction = true;
 					}
 					else {
-						this.PLAYER[ player ].coins -= 3;
+						this.PLAYERSTATE[ player ].coins -= 3;
 					}
 					break;
 				case 'stealing':
@@ -840,7 +833,7 @@ class LOOP {
 			this.ROUND = this.ROUNDS;
 		}
 
-		this.GetScore( winners, game.ALLPLAYER );
+		this.GetScore( winners, game.PLAYERNAMES );
 
 		this.ROUND ++;
 		this.LOG = '';
