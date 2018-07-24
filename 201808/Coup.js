@@ -157,6 +157,8 @@ class Coup {
 				return true;
 			})
 			.map( card => this.GAMEDECK.push( card ) );
+
+		this.ShuffleCards();
 	}
 
 
