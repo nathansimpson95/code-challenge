@@ -13,16 +13,34 @@ const ACTIONS = constantFns.ACTIONS();
 
 
 class COUP {
-	constructor() {
-		// yes globals(sorta); sue me!
+	constructor( availablePlayers ) {
+
+		// Select up to 6 random players from the pool provided
+		const selectedPlayers = availablePlayers.filter( item => item !== undefined )
+			.map( item => [ Math.random(), item ] )
+			.sort( ( a, b ) => a[ 0 ] - b[ 0 ] )
+			.map( item => item[ 1 ] )
+			.slice( 0, 6 );
+
+		if( selectedPlayers.length < 2 ) {
+			console.error(`\n🛑  We need at least two player to play this game!\n`);
+			process.exit(1);
+		}
+
+
 		this.HISTORY = [];
 		this.DISCARDPILE = [];
 		this.BOTS = {};
 		this.PLAYER = {};
-		this.DECK = DECK.slice( 0 );
+		this.DECK = [].concat(DECK);
 		this.TURN = 0;
 		this.ROUNDS = 0;
-		this.ALLPLAYER = [];
+		this.ALLPLAYER = selectedPlayers;
+
+		this.MakeBots();
+		this.MakePlayers();
+		this.HandOutCards();
+		this.ElectStarter();
 	}
 
 	Play( allPlayer ) {
@@ -36,13 +54,6 @@ class COUP {
 			`   ${Style.yellow('╚═════╝  ╚═════╝   ╚═════╝  ╚═╝')} v0.0.1\n` +
 			`\n`
 		);
-
-		this.ALLPLAYER = allPlayer;
-
-		this.MakeBots();
-		this.MakePlayers();
-		this.HandOutCards();
-		this.ElectStarter();
 
 		// this is the game loop
 		return this.Turn();
@@ -836,8 +847,8 @@ class LOOP {
 	Play() {
 		this.DisplayScore( true );
 
-		let game = new COUP();
-		const winners = game.Play( SelectPlayersForGame( ALLBOTS ) );
+		let game = new COUP(ALLBOTS);
+		const winners = game.Play();
 
 		if( !winners || this.ERROR ) {
 			console.info( this.LOG );
@@ -881,19 +892,8 @@ class LOOP {
 	}
 };
 
-const SelectPlayersForGame = ( allPlayer ) => {
-	return allPlayer
-		.filter( item => item !== undefined )
-		.map( item => [ Math.random(), item ] )
-		.sort( ( a, b ) => a[ 0 ] - b[ 0 ] )
-		.map( item => item[ 1 ] )
-		.slice( 0, 6 );
-}
-
-
 if( process.argv.includes('play') ) {
-	const gamePlayers = SelectPlayersForGame( ALLBOTS );
-	new COUP().Play( gamePlayers );
+	new COUP(ALLBOTS).Play();
 }
 
 if( process.argv.includes('loop') ) {
@@ -906,4 +906,5 @@ if( process.argv.includes('loop') ) {
 
 module.exports = exports = {
 	COUP,
+	LOOP,
 };

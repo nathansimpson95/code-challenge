@@ -1,38 +1,17 @@
-'use strict';
-
 const Path = require('path');
 const Fs = require('fs');
+const BotPath = __dirname;
 
 
-const GetPlayer = ( path = '.' ) => {
-	const allPlayer = Fs
-		.readdirSync( path )
-		.map( name => Path.join( path, name ) )
-		.filter( item => Fs.lstatSync( item ).isDirectory() )
-		.filter( folder => !folder.startsWith('.') );
+const cards = [
+	'duke',
+	'assassin',
+	'captain',
+	'ambassador',
+	'contessa',
+];
 
-	if( allPlayer.length < 2 ) {
-		console.error(`\n🛑  We need at least two player to play this game!\n`);
-		process.exit(1);
-	}
-	else {
-		return allPlayer;
-	}
-};
-
-const ALLBOTS = GetPlayer;
-
-const CARDS = () => [ 'duke', 'assassin', 'captain', 'ambassador', 'contessa' ];
-
-const GetStack = ( cards = CARDS() ) => {
-	let STACK = [];
-	cards.forEach( card => STACK = [ ...STACK, ...new Array(3).fill( card ) ] );
-	return STACK;
-};
-
-const DECK = GetStack;
-
-const ACTIONS = () => [
+const actions = [
 	'taking-1',
 	'foreign-aid',
 	'couping',
@@ -42,10 +21,15 @@ const ACTIONS = () => [
 	'swapping',
 ];
 
+const bots = Fs
+	.readdirSync(BotPath)
+	.filter( file => !file.startsWith('.') )
+	.filter( file => Fs.lstatSync( file ).isDirectory() );
+
 
 module.exports = exports = {
-	ALLBOTS,
-	CARDS,
-	DECK,
-	ACTIONS,
+	ALLBOTS: () => bots,
+	CARDS: () => cards,
+	DECK: () => [].concat(cards, cards, cards),
+	ACTIONS: () => actions,
 };
