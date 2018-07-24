@@ -13,7 +13,28 @@ const ACTIONS = constantFns.ACTIONS();
 
 
 class COUP {
-	constructor( availablePlayers ) {
+	constructor() {
+		this.HISTORY = [];
+		this.DISCARDPILE = [];
+		this.BOTS = {};
+		this.PLAYER = {};
+		this.DECK = [].concat(DECK);
+		this.TURN = 0;
+		this.ROUNDS = 0;
+		this.ALLPLAYER = [];
+	}
+
+	Play( availablePlayers ) {
+		console.log(
+			`\n\n` +
+			`   ██████${Style.yellow('╗')}  ██████${Style.yellow('╗')}  ██${Style.yellow('╗')}   ██${Style.yellow('╗')} ██████${Style.yellow('╗')}\n` +
+			`  ██${Style.yellow('╔════╝')} ██${Style.yellow('╔═══')}██${Style.yellow('╗')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('╔══')}██${Style.yellow('╗')}\n` +
+			`  ██${Style.yellow('║')}      ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██████${Style.yellow('╔╝')}\n` +
+			`  ██${Style.yellow('║')}      ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('╔═══╝')}\n` +
+			`  ${Style.yellow('╚')}██████${Style.yellow('╗')} ${Style.yellow('╚')}██████${Style.yellow('╔╝')} ${Style.yellow('╚')}██████${Style.yellow('╔╝')} ██${Style.yellow('║')}\n` +
+			`   ${Style.yellow('╚═════╝  ╚═════╝   ╚═════╝  ╚═╝')} v0.0.1\n` +
+			`\n`
+		);
 
 		// Select up to 6 random players from the pool provided
 		const selectedPlayers = availablePlayers.filter( item => item !== undefined )
@@ -27,64 +48,41 @@ class COUP {
 			process.exit(1);
 		}
 
-
-		this.HISTORY = [];
-		this.DISCARDPILE = [];
-		this.BOTS = {};
-		this.PLAYER = {};
-		this.DECK = [].concat(DECK);
-		this.TURN = 0;
-		this.ROUNDS = 0;
 		this.ALLPLAYER = selectedPlayers;
 
 		this.MakeBots();
 		this.MakePlayers();
 		this.HandOutCards();
 		this.ElectStarter();
-	}
-
-	Play( allPlayer ) {
-		console.log(
-			`\n\n` +
-			`   ██████${Style.yellow('╗')}  ██████${Style.yellow('╗')}  ██${Style.yellow('╗')}   ██${Style.yellow('╗')} ██████${Style.yellow('╗')}\n` +
-			`  ██${Style.yellow('╔════╝')} ██${Style.yellow('╔═══')}██${Style.yellow('╗')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('╔══')}██${Style.yellow('╗')}\n` +
-			`  ██${Style.yellow('║')}      ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██████${Style.yellow('╔╝')}\n` +
-			`  ██${Style.yellow('║')}      ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('║')}   ██${Style.yellow('║')} ██${Style.yellow('╔═══╝')}\n` +
-			`  ${Style.yellow('╚')}██████${Style.yellow('╗')} ${Style.yellow('╚')}██████${Style.yellow('╔╝')} ${Style.yellow('╚')}██████${Style.yellow('╔╝')} ██${Style.yellow('║')}\n` +
-			`   ${Style.yellow('╚═════╝  ╚═════╝   ╚═════╝  ╚═╝')} v0.0.1\n` +
-			`\n`
-		);
 
 		// this is the game loop
 		return this.Turn();
 	}
 
 	MakeBots() {
-		try {
-			this.ALLPLAYER.forEach( player => {
-				const bot = require(`./${ player }/index.js`);
-				this.BOTS[ player ] = new bot();
+		console.log('in COUP original MakeBots() function');
 
-				if(
-					!this.BOTS[ player ].OnTurn ||
-					!this.BOTS[ player ].OnChallengeActionRound ||
-					!this.BOTS[ player ].OnCounterAction ||
-					!this.BOTS[ player ].OnCounterActionRound ||
-					!this.BOTS[ player ].OnSwappingCards ||
-					!this.BOTS[ player ].OnCardLoss
-				) {
-					const missing = ['OnTurn', 'OnChallengeActionRound', 'OnCounterAction', 'OnCounterActionRound', 'OnSwappingCards', 'OnCardLoss']
-						.filter( method => !Object.keys( this.BOTS[ player ] ).includes( method ) );
+		this.ALLPLAYER.forEach( player => {
+			let BotClass;
+			let bot;
 
-					throw(`🚨  ${ Style.red('The bot ') }${ Style.yellow( player ) }${ Style.red(` is missing ${ missing.length > 1 ? 'methods' : 'a method' }: `) }${ Style.yellow( missing.join(', ') ) }!\n`);
-				}
-			});
-		}
-		catch( error ) {
-			console.error(`Error in bot ${ player }`);
-			console.error( error );
-			process.exit( 1 );
-		}
+			try {
+				BotClass = require(`./${ player }/index.js`);
+				bot = new BotClass();
+			}
+			catch( error ) {
+				console.error(`Error instantiating bot '${ player }'`);
+				throw error;
+			}
+
+			const requiredMethods = ['OnTurn', 'OnChallengeActionRound', 'OnCounterAction', 'OnCounterActionRound', 'OnSwappingCards', 'OnCardLoss'];
+			const missing = requiredMethods.filter( method => typeof bot[method] === 'undefined' );
+			if(missing.length > 0) {
+				throw new Error(`🚨  ${ Style.red('The bot ') }${ Style.yellow( player ) }${ Style.red(` is missing ${ missing.length > 1 ? 'methods' : 'a method' }: `) }${ Style.yellow( missing.join(', ') ) }!\n`);
+			}
+
+			this.BOTS[ player ] = bot;
+		});
 	}
 
 
@@ -847,8 +845,8 @@ class LOOP {
 	Play() {
 		this.DisplayScore( true );
 
-		let game = new COUP(ALLBOTS);
-		const winners = game.Play();
+		let game = new COUP();
+		const winners = game.Play(ALLBOTS);
 
 		if( !winners || this.ERROR ) {
 			console.info( this.LOG );
@@ -893,7 +891,7 @@ class LOOP {
 };
 
 if( process.argv.includes('play') ) {
-	new COUP(ALLBOTS).Play();
+	new COUP().Play(ALLBOTS);
 }
 
 if( process.argv.includes('loop') ) {
