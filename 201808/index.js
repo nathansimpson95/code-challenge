@@ -86,10 +86,8 @@ class COUP {
 	}
 
 
-	MakePlayers( players ) {
-		players = this.ShufflePlayer( this.ALLPLAYER );
-
-		players.forEach( player => {
+	MakePlayers() {
+		this.ALLPLAYER.forEach( player => {
 			this.PLAYER[ player ] = {
 				card1: undefined,
 				card2: undefined,
@@ -98,7 +96,6 @@ class COUP {
 		});
 	}
 
-
 	ShuffleCards() {
 		this.DECK = this.DECK
 			.filter( item => item !== undefined )
@@ -106,16 +103,6 @@ class COUP {
 			.sort( ( a, b ) => a[ 0 ] - b[ 0 ] )
 			.map( item => item[ 1 ] );
 	}
-
-
-	ShufflePlayer( player ) {
-		return player
-			.filter( item => item !== undefined )
-			.map( item => [ Math.random(), item ] )
-			.sort( ( a, b ) => a[ 0 ] - b[ 0 ] )
-			.map( item => item[ 1 ] );
-	}
-
 
 	HandOutCards() {
 		this.ShuffleCards();
@@ -127,7 +114,6 @@ class COUP {
 				this.PLAYER[ key ].card2 = this.DECK.pop();
 			});
 	}
-
 
 	GetCardFromDeck() {
 		const newCard = this.DECK.pop();
