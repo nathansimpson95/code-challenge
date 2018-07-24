@@ -837,7 +837,7 @@ class LOOP {
 		this.DisplayScore( true );
 
 		let game = new COUP();
-		const winners = game.Play( GetPlayer( ALLBOTS ) );
+		const winners = game.Play( SelectPlayersForGame( ALLBOTS ) );
 
 		if( !winners || this.ERROR ) {
 			console.info( this.LOG );
@@ -881,7 +881,7 @@ class LOOP {
 	}
 };
 
-const GetPlayer = ( allPlayer ) => {
+const SelectPlayersForGame = ( allPlayer ) => {
 	return allPlayer
 		.filter( item => item !== undefined )
 		.map( item => [ Math.random(), item ] )
@@ -892,7 +892,8 @@ const GetPlayer = ( allPlayer ) => {
 
 
 if( process.argv.includes('play') ) {
-	new COUP().Play( GetPlayer( ALLBOTS ) );
+	const gamePlayers = SelectPlayersForGame( ALLBOTS );
+	new COUP().Play( gamePlayers );
 }
 
 if( process.argv.includes('loop') ) {
