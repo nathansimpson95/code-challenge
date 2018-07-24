@@ -24,7 +24,7 @@ const actions = [
 const bots = Fs
 	.readdirSync(BotPath)
 	.filter( file => !file.startsWith('.') )
-	.filter( file => Fs.lstatSync( file ).isDirectory() );
+	.filter( file => Fs.lstatSync( Path.join( BotPath, file ) ).isDirectory() );
 
 
 module.exports = exports = {
