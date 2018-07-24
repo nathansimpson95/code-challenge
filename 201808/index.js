@@ -2,18 +2,14 @@
 
 const { Style } = require('./helper.js');
 const Fs = require('fs');
-let {
-	ALLBOTS,
-	CARDS,
-	DECK,
-	ACTIONS,
-} = require('./constants.js');
 
 // making clones so the bots don't break them
-ALLBOTS = ALLBOTS();
-CARDS = CARDS();
-DECK = DECK();
-ACTIONS = ACTIONS();
+const constantFns = require('./constants.js');
+
+const ALLBOTS = constantFns.ALLBOTS();
+const CARDS = constantFns.CARDS();
+const DECK = constantFns.DECK();
+const ACTIONS = constantFns.ACTIONS();
 
 
 class COUP {
