@@ -52,7 +52,7 @@ class COUP {
 		return this.Turn();
 	}
 
-	GetBots( player ) {
+	GetBots() {
 		try {
 			this.ALLPLAYER.forEach( player => {
 				const bot = require(`./${ player }/index.js`);
