@@ -64,7 +64,7 @@ class Coup {
 
 			try {
 				BotClass = require(`./${ player }/index.js`);
-				bot = new BotClass(player);
+				bot = new BotClass({ name: player });
 			}
 			catch( error ) {
 				console.error(`Error instantiating bot '${ player }'`);
