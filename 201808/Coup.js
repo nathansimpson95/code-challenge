@@ -375,6 +375,7 @@ class Coup {
 				this.HISTORY.push({
 					type: 'unsuccessful-challenge',
 					action: 'swap-1',
+					card: card,
 					from: challengee,
 				});
 				console.log(`↬  ${ this.GetAvatar( challengee ) } put the ${ Style.yellow( card ) } back in the deck and drew a new card`);
