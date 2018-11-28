@@ -4,15 +4,15 @@ class BOT {
 		this.size = size;
 		this.end = end;
 		this.direction = "down";
-		this.actionSequence = [];
+		//this.actionSequence = [];
 		this.history = [];
 	}
 
-	avoidBumping(direction, { MAP }) {
-		const amOnTopEdge    = this.position[0] == 0;
-		const amOnBottomEdge = this.position[0] == this.size[0] - 1;
-		const amOnLeftEdge   = this.position[1] == 0;
-		const amOnRightEdge  = this.position[1] == this.size[1] - 1;
+	avoidBumping(direction, MAP) {
+		const amOnTopEdge    = this.position[0] === 0;
+		const amOnBottomEdge = this.position[0] === this.size[0] - 1;
+		const amOnLeftEdge   = this.position[1] === 0;
+		const amOnRightEdge  = this.position[1] === this.size[1] - 1;
 
 		const cantGo = {
 			up:    !MAP[1][2] || amOnTopEdge,
@@ -25,10 +25,10 @@ class BOT {
 			return direction;
 		}else{
 			let actions = ["up", "right", "down", "left"];
-			if (cantGo.up) {actions = actions.filter(action => action != "up")}
-			if (cantGo.down) {actions = actions.filter(action => action != "down")}
-			if (cantGo.left) {actions = actions.filter(action => action != "left")}
-			if (cantGo.right) {actions = actions.filter(action => action != "right")}
+			if (cantGo.up) {actions = actions.filter(action => action !== "up")}
+			if (cantGo.down) {actions = actions.filter(action => action !== "down")}
+			if (cantGo.left) {actions = actions.filter(action => action !== "left")}
+			if (cantGo.right) {actions = actions.filter(action => action !== "right")}
 
 			return actions[Math.floor(Math.random() * actions.length)];
 		}
@@ -89,11 +89,11 @@ class BOT {
 			this.changeDirection();
 		}
 
-		let action = this.avoidBumping(this.direction,{ MAP });
+		let action = this.avoidBumping(this.direction, MAP);
 
-		if (this.actionSequence.length > 0) {
-			action = this.actionSequence.shift();
-		}
+		// if (this.actionSequence.length > 0) {
+		// 	action = this.actionSequence.shift();
+		// }
 
 		this.updateGPS(action);
 
